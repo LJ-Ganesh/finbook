@@ -80,12 +80,36 @@ const inr = n => n == null || !isFinite(n) ? '—' :
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(n);
 const num = n => n == null ? '—' : new Intl.NumberFormat('en-IN').format(n);
 
+// Answers are kept for a while, so repeating a lookup is instant and doesn't ask Yahoo again.
+// Search results are saved in the browser for a day (they survive reloads);
+// prices and charts are kept in memory briefly so they stay fresh.
+const CACHE_SECONDS = { search: 86400, quote: 30, chart: 60 };
+const SEARCH_STORE = 'searchCache', SEARCH_KEEP = 50;
+const memory = new Map();
+function savedSearches() {
+  try { return JSON.parse(localStorage.getItem(SEARCH_STORE)) || {}; } catch { return {}; }
+}
+function saveSearch(key, data) {
+  const saved = { ...savedSearches(), [key]: { at: Date.now(), data } };
+  const newest = Object.entries(saved).sort((a, b) => b[1].at - a[1].at).slice(0, SEARCH_KEEP);
+  try { localStorage.setItem(SEARCH_STORE, JSON.stringify(Object.fromEntries(newest))); } catch {}
+}
+
 async function api(path) {
+  const kind = path.match(/^\/api\/(\w+)/)?.[1];
+  const ttl = (CACHE_SECONDS[kind] || 0) * 1000, key = path.toLowerCase();
+  const hit = memory.get(key) || (kind === 'search' ? savedSearches()[key] : null);
+  if (ttl && hit && Date.now() - hit.at < ttl) return hit.data;
+
   let res;
   try { res = await fetch(path); }
-  catch { throw new Error('The local server is not running. Double-click "Start Stock Price.command" and try again.'); }
+  catch { throw new Error('Could not reach the price service. Check your internet connection (or, on your Mac, that "Start Stock Price.command" is running).'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Server error (${res.status}).`);
+  if (ttl) {
+    memory.set(key, { at: Date.now(), data });
+    if (kind === 'search') saveSearch(key, data);
+  }
   return data;
 }
 

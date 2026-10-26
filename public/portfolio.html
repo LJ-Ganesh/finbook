@@ -59,6 +59,14 @@ tfoot td{font-weight:700;border-bottom:0}
 .backup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .backup .hint{flex:1;min-width:220px}
 .secondary{background:var(--bg);color:var(--text);border:1px solid var(--line);font-weight:600;padding:7px 14px}
+.account{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.account b{color:var(--text)}
+.auth{max-width:420px}
+.auth label{font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin:10px 0 4px}
+.auth .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.link{background:none;color:var(--accent);padding:0;font-weight:600;font-size:.88rem;border:0;margin-top:10px}
+.banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--accent);border-radius:14px;padding:12px 16px;margin-top:16px}
+.banner span{flex:1;min-width:220px}
 @media(max-width:720px){.form{grid-template-columns:1fr 1fr}.form .wide{grid-column:1/-1}.form button{grid-column:1/-1}}
 </style>
 </head>
@@ -66,6 +74,35 @@ tfoot td{font-weight:700;border-bottom:0}
 <nav><a href="/">Stock lookup</a><a href="/portfolio" aria-current="page">Portfolio</a></nav>
 <h1>My portfolio</h1>
 <p class="muted">Add each purchase. Your returns are compared with the Nifty indices day by day.</p>
+<div class="account" id="account" hidden>Signed in as <b id="userEmail"></b><button type="button" class="secondary" id="signOutBtn">Sign out</button></div>
+
+<section class="card auth" id="authCard" hidden>
+  <div id="setupMsg" hidden>
+    <h2>Accounts aren't set up yet</h2>
+    <p class="hint">Fill in your Supabase project URL and anon key in <code>public/config.js</code>, then reload. See README.md for the steps.</p>
+  </div>
+  <form id="signInForm">
+    <h2>Sign in</h2>
+    <p class="hint" style="margin:0">Your portfolio is saved to your account, so it's the same on every device.</p>
+    <label for="email">Email</label><input id="email" type="email" autocomplete="email" required>
+    <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" minlength="6" required>
+    <div class="actions"><button id="signInBtn">Sign in</button><button type="button" class="secondary" id="signUpBtn">Create account</button></div>
+    <button type="button" class="link" id="forgotBtn">Forgot password?</button>
+  </form>
+  <form id="newPasswordForm" hidden>
+    <h2>Choose a new password</h2>
+    <label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+    <div class="actions"><button id="savePasswordBtn">Save password</button></div>
+  </form>
+  <div id="authStatus" class="status" role="status" aria-live="polite"></div>
+</section>
+
+<div id="app" hidden>
+<div class="banner" id="migrate" hidden>
+  <span id="migrateText"></span>
+  <button type="button" id="migrateBtn">Move to my account</button>
+  <button type="button" class="secondary" id="migrateSkip">Not now</button>
+</div>
 
 <section class="card">
   <h2>Add a purchase</h2>
@@ -79,7 +116,7 @@ tfoot td{font-weight:700;border-bottom:0}
   <div id="formStatus" class="status" role="status" aria-live="polite"></div>
   <p class="hint">NSE is used unless you add .BO for BSE. Buying the same stock again on another date? Add it as a separate purchase.</p>
   <div class="backup">
-    <span class="hint">Your portfolio is saved only in this browser. Export it to keep a backup or move it to another device.</span>
+    <span class="hint">Your portfolio is saved to your account. Export downloads a copy; Import adds purchases from a file.</span>
     <button type="button" class="secondary" id="exportBtn">Export</button>
     <button type="button" class="secondary" id="importBtn">Import</button>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
@@ -124,7 +161,10 @@ tfoot td{font-weight:700;border-bottom:0}
   </section>
   <p class="hint">Prices are daily closes from Yahoo Finance (today's is the latest price), adjusted for splits. Dividends are not included. Yahoo has no history for Nifty Midcap 100, Smallcap 100 or Microcap 250, so Midcap 150 and Smallcap 250 are used.</p>
 </div>
+</div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script src="/config.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const inr = (n, dp = 2) => n == null || !isFinite(n) ? '—' :
@@ -140,7 +180,7 @@ const COLORS = { portfolio: 'var(--c-port)', '^NSEI': 'var(--c-nifty)', 'NIFTYMI
 async function api(path, options) {
   let res;
   try { res = await fetch(path, options); }
-  catch { throw new Error('The local server is not running. Double-click "Start Stock Price.command" and try again.'); }
+  catch { throw new Error('Could not reach the price service. Check your internet connection (or, on your Mac, that "Start Stock Price.command" is running).'); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Server error (${res.status}).`);
   return data;
@@ -150,15 +190,39 @@ function setStatus(node, text, isError) { node.textContent = text; node.classNam
 let holdings = [], indices = [], model = null;
 let months = 0, hidden = new Set();
 
-// ---------- Saved purchases (in this browser) ----------
-const STORE_KEY = 'portfolio';
-function readHoldings() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
+// ---------- Saved purchases (in your Supabase account) ----------
+const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+const cfg = window.APP_CONFIG || {};
+const configured = /^https:\/\//.test(cfg.SUPABASE_URL || '') && !!cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_ANON_KEY.startsWith('PASTE');
+const OLD_BROWSER_KEY = 'portfolio'; // where purchases were kept before accounts existed
+let db = null, user = null;
+
+const fromRow = r => ({ id: r.id, symbol: r.symbol, name: r.name, date: r.bought_on, price: +r.price, quantity: +r.quantity });
+const toRow = h => ({ symbol: h.symbol, name: h.name, bought_on: h.date, price: h.price, quantity: h.quantity });
+const sameHolding = (a, b) => a.symbol === b.symbol && a.date === b.date && a.price === b.price && a.quantity === b.quantity;
+
+async function readHoldings() {
+  const { data, error } = await db.from('holdings').select('id, symbol, name, bought_on, price, quantity').order('bought_on');
+  if (error) throw new Error('Could not load your portfolio: ' + error.message);
+  return data.map(fromRow);
 }
-function writeHoldings(list) {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
-  catch { throw new Error('This browser is not allowing the page to save data (private browsing?). Use Export to keep a copy.'); }
+async function insertHoldings(list) {
+  if (!list.length) return;
+  const { error } = await db.from('holdings').insert(list.map(toRow));
+  if (error) throw new Error('Could not save: ' + error.message);
 }
+async function deleteHolding(id) {
+  const { error } = await db.from('holdings').delete().eq('id', id);
+  if (error) throw new Error('Could not remove: ' + error.message);
+}
+// Adds purchases that aren't already in the account; returns how many were added.
+async function addNew(list) {
+  const current = await readHoldings();
+  const fresh = list.filter(h => !current.some(c => sameHolding(c, h)));
+  await insertHoldings(fresh);
+  return fresh.length;
+}
+
 // Checks one purchase and returns it in the saved format, or throws a readable error.
 function cleanHolding(h) {
   const symbol = String(h.symbol || '').trim().toUpperCase();
@@ -168,12 +232,107 @@ function cleanHolding(h) {
   if (h.date > today) throw new Error('Purchase date cannot be in the future.');
   if (!(+h.price > 0)) throw new Error('Average price must be more than 0.');
   if (!(+h.quantity > 0)) throw new Error('Quantity must be more than 0.');
-  return { id: h.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-           symbol: full, name: h.name || full, date: h.date, price: +h.price, quantity: +h.quantity };
+  return { symbol: full, name: h.name || full, date: h.date, price: +h.price, quantity: +h.quantity };
 }
 
+// ---------- Sign in / out ----------
+function showSignedIn(u) {
+  if (u?.id === user?.id) return; // nothing changed
+  user = u;
+  $('authCard').hidden = !!u; $('app').hidden = !u; $('account').hidden = !u;
+  if (!u) { model = null; $('content').hidden = true; return; }
+  $('userEmail').textContent = u.email;
+  $('signInForm').reset(); setStatus($('authStatus'), '');
+  load();
+  offerBrowserPurchases();
+}
+
+async function startAuth() {
+  if (!configured || !window.supabase) {
+    $('authCard').hidden = false; $('setupMsg').hidden = false; $('signInForm').hidden = true;
+    if (configured) setStatus($('authStatus'), 'Could not load the sign-in library. Check your internet connection and reload.', true);
+    return;
+  }
+  db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+  db.auth.onAuthStateChange((event, session) => {
+    // Run outside the callback: Supabase recommends not awaiting its calls in here.
+    setTimeout(() => {
+      if (event === 'PASSWORD_RECOVERY') {
+        $('authCard').hidden = false; $('signInForm').hidden = true; $('newPasswordForm').hidden = false;
+      }
+      showSignedIn(session?.user ?? null);
+    });
+  });
+  const { data } = await db.auth.getSession();
+  showSignedIn(data.session?.user ?? null);
+}
+
+async function authAction(button, task) {
+  const email = $('email').value.trim(), password = $('password').value;
+  if (!email || password.length < 6) { setStatus($('authStatus'), 'Enter your email and a password of at least 6 characters.', true); return; }
+  button.disabled = true;
+  try { await task(email, password); }
+  catch (err) { setStatus($('authStatus'), err.message, true); }
+  finally { button.disabled = false; }
+}
+const returnUrl = () => location.origin + '/portfolio';
+
+$('signInForm').addEventListener('submit', e => {
+  e.preventDefault();
+  authAction($('signInBtn'), async (email, password) => {
+    setStatus($('authStatus'), 'Signing in…');
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Wrong email or password.' : error.message);
+  });
+});
+$('signUpBtn').onclick = () => authAction($('signUpBtn'), async (email, password) => {
+  setStatus($('authStatus'), 'Creating your account…');
+  const { data, error } = await db.auth.signUp({ email, password, options: { emailRedirectTo: returnUrl() } });
+  if (error) throw error;
+  // With email confirmation on (Supabase's default) there's no session until the link is clicked.
+  if (!data.session) setStatus($('authStatus'), `Check ${email} for a confirmation link, then come back and sign in.`);
+});
+$('forgotBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  if (!email) { setStatus($('authStatus'), 'Type your email above first, then click "Forgot password?" again.', true); return; }
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: returnUrl() });
+  setStatus($('authStatus'), error ? error.message : `If ${email} has an account, a reset link is on its way.`, !!error);
+};
+$('newPasswordForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('savePasswordBtn').disabled = true;
+  const { error } = await db.auth.updateUser({ password: $('newPassword').value });
+  $('savePasswordBtn').disabled = false;
+  if (error) { setStatus($('authStatus'), error.message, true); return; }
+  $('newPasswordForm').hidden = true; $('signInForm').hidden = false;
+  $('authCard').hidden = !!user;
+  setStatus($('formStatus'), 'Password changed.');
+});
+$('signOutBtn').onclick = async () => { await db.auth.signOut(); showSignedIn(null); };
+
+// Purchases saved in this browser before accounts existed can be moved over once.
+function browserPurchases() {
+  try { return (JSON.parse(localStorage.getItem(OLD_BROWSER_KEY)) || []).map(cleanHolding); } catch { return []; }
+}
+function offerBrowserPurchases() {
+  const n = browserPurchases().length;
+  $('migrate').hidden = !n;
+  if (n) $('migrateText').textContent = `This browser has ${n} purchase${n > 1 ? 's' : ''} saved from before accounts. Move ${n > 1 ? 'them' : 'it'} into your account?`;
+}
+$('migrateBtn').onclick = async () => {
+  $('migrateBtn').disabled = true;
+  try {
+    const added = await addNew(browserPurchases());
+    try { localStorage.removeItem(OLD_BROWSER_KEY); } catch {}
+    $('migrate').hidden = true;
+    setStatus($('formStatus'), `Moved ${added} purchase${added === 1 ? '' : 's'} into your account.`);
+    await load();
+  } catch (err) { setStatus($('formStatus'), err.message, true); }
+  finally { $('migrateBtn').disabled = false; }
+};
+$('migrateSkip').onclick = () => { $('migrate').hidden = true; };
+
 // ---------- Add / remove purchases ----------
-const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 $('date').max = today; $('date').value = today;
 
 $('addForm').addEventListener('submit', async e => {
@@ -186,7 +345,7 @@ $('addForm').addEventListener('submit', async e => {
     const q = await api('/api/quote?symbol=' + encodeURIComponent(holding.symbol))
       .catch(() => { throw new Error(`${holding.symbol} was not found on Yahoo Finance.`); });
     holding.name = q.name;
-    writeHoldings([...readHoldings(), holding]);
+    await insertHoldings([holding]);
     setStatus($('formStatus'), `Added ${holding.quantity} × ${holding.name} (${holding.symbol}).`);
     $('symbol').value = ''; $('price').value = ''; $('qty').value = '';
     await load();
@@ -196,18 +355,21 @@ $('addForm').addEventListener('submit', async e => {
 
 async function removeHolding(h) {
   if (!confirm(`Remove ${h.quantity} × ${h.symbol} bought on ${niceDate(h.date)}?`)) return;
-  try { writeHoldings(readHoldings().filter(x => x.id !== h.id)); await load(); }
+  try { await deleteHolding(h.id); await load(); }
   catch (err) { setStatus($('status'), err.message, true); }
 }
 
 // ---------- Export / import ----------
-$('exportBtn').onclick = () => {
-  const blob = new Blob([JSON.stringify(readHoldings(), null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `portfolio-${today}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+$('exportBtn').onclick = async () => {
+  try {
+    const list = (await readHoldings()).map(({ id, ...h }) => h);
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `portfolio-${today}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) { setStatus($('formStatus'), err.message, true); }
 };
 $('importBtn').onclick = () => $('importFile').click();
 $('importFile').onchange = async e => {
@@ -217,11 +379,9 @@ $('importFile').onchange = async e => {
   try {
     const list = JSON.parse(await file.text());
     if (!Array.isArray(list)) throw new Error('This is not a portfolio export file.');
-    const clean = list.map(cleanHolding);
-    const current = readHoldings();
-    if (current.length && !confirm(`Replace your ${current.length} saved purchase(s) with the ${clean.length} in this file?`)) return;
-    writeHoldings(clean);
-    setStatus($('formStatus'), `Imported ${clean.length} purchase(s).`);
+    const added = await addNew(list.map(cleanHolding));
+    const skipped = list.length - added;
+    setStatus($('formStatus'), `Imported ${added} purchase${added === 1 ? '' : 's'}` + (skipped ? ` (${skipped} already in your account).` : '.'));
     await load();
   } catch (err) { setStatus($('formStatus'), 'Import failed: ' + err.message, true); }
 };
@@ -230,7 +390,7 @@ $('importFile').onchange = async e => {
 async function load() {
   try {
     setStatus($('status'), 'Loading portfolio…');
-    holdings = readHoldings();
+    holdings = await readHoldings();
     if (!indices.length) ({ indices } = await api('/api/indices'));
     if (!holdings.length) { $('content').hidden = true; setStatus($('status'), 'No purchases yet. Add your first one above.'); return; }
     const start = holdings.map(h => h.date).sort()[0];
@@ -487,6 +647,6 @@ function drawBars() {
 }
 
 window.addEventListener('resize', () => { if (model && !$('content').hidden) { drawLines(); drawBars(); } });
-load();
+startAuth();
 </script>
 </body></html>
