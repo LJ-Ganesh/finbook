@@ -10,6 +10,7 @@
 @media(prefers-color-scheme:dark){:root{--bg:#0b1020;--panel:#121a2e;--text:#f3f6fc;--muted:#a7b2c8;--line:#26324b;--accent:#8ba5ff;--on-accent:#071027;--up:#79e0b0;--down:#ff9caa;
   --c-port:#8ba5ff;--c-nifty:#ff922b;--c-mid:#da77f2;--c-small:#38d9a9}}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 main{width:min(1000px,100%);margin:0 auto;padding:24px 16px 48px}
 nav{display:flex;gap:16px;font-size:.92rem;margin-bottom:14px}nav a{color:var(--muted);text-decoration:none}nav a[aria-current]{color:var(--text);font-weight:700}
@@ -195,7 +196,7 @@ const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' 
 const cfg = window.APP_CONFIG || {};
 const configured = /^https:\/\//.test(cfg.SUPABASE_URL || '') && !!cfg.SUPABASE_ANON_KEY && !cfg.SUPABASE_ANON_KEY.startsWith('PASTE');
 const OLD_BROWSER_KEY = 'portfolio'; // where purchases were kept before accounts existed
-let db = null, user = null;
+let db = null, user = null, authShown = false;
 
 const fromRow = r => ({ id: r.id, symbol: r.symbol, name: r.name, date: r.bought_on, price: +r.price, quantity: +r.quantity });
 const toRow = h => ({ symbol: h.symbol, name: h.name, bought_on: h.date, price: h.price, quantity: h.quantity });
@@ -237,7 +238,8 @@ function cleanHolding(h) {
 
 // ---------- Sign in / out ----------
 function showSignedIn(u) {
-  if (u?.id === user?.id) return; // nothing changed
+  if (authShown && u?.id === user?.id) return; // nothing changed
+  authShown = true;
   user = u;
   $('authCard').hidden = !!u; $('app').hidden = !u; $('account').hidden = !u;
   if (!u) { model = null; $('content').hidden = true; return; }
