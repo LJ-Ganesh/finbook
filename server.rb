@@ -1,7 +1,7 @@
 # Tiny local server for the Indian stock price page.
 # Uses only the Ruby that ships with macOS: no installs needed.
 # Browsers can't call Yahoo Finance directly, so the page asks this server,
-# and this server asks Yahoo. Online, netlify/functions/api.mjs does the same job.
+# and this server asks Yahoo. Online, api/index.mjs (a Vercel Function) does the same job.
 require 'webrick'
 require 'net/http'
 require 'json'
