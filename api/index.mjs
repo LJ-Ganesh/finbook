@@ -32,10 +32,14 @@ async function yahoo(path, params) {
   return res.json();
 }
 
-// cacheSeconds lets Vercel's CDN reuse an answer instead of asking Yahoo again.
+// cacheSeconds lets Vercel's CDN reuse an answer for everyone instead of asking
+// Yahoo again, and lets each browser reuse it for up to 5 minutes.
 function json(status, body, cacheSeconds = 0) {
   const headers = { 'Content-Type': 'application/json' };
-  if (status === 200 && cacheSeconds) headers['Vercel-CDN-Cache-Control'] = `public, s-maxage=${cacheSeconds}`;
+  if (status === 200 && cacheSeconds) {
+    headers['Vercel-CDN-Cache-Control'] = `public, s-maxage=${cacheSeconds}, stale-while-revalidate=${cacheSeconds}`;
+    headers['Cache-Control'] = `public, max-age=${Math.min(cacheSeconds, 300)}`;
+  }
   return new Response(JSON.stringify(body), { status, headers });
 }
 

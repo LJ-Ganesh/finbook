@@ -30,8 +30,17 @@ INDICES = {
   'NIFTYMIDCAP150.NS' => 'Nifty Midcap 150',
   'NIFTYSMLCAP250.NS' => 'Nifty Smallcap 250'
 }.freeze
-HISTORY_CACHE = {}
-HISTORY_TTL = 600 # seconds to reuse downloaded price history
+CACHE = {}
+CACHE_LOCK = Mutex.new
+
+# Reuses an earlier answer for `ttl` seconds instead of asking Yahoo again.
+def cached(key, ttl)
+  hit = CACHE_LOCK.synchronize { CACHE[key] }
+  return hit[:value] if hit && Time.now - hit[:at] < ttl
+  value = yield
+  CACHE_LOCK.synchronize { CACHE[key] = { at: Time.now, value: value } }
+  value
+end
 
 def yahoo(path, params)
   uri = URI("https://query1.finance.yahoo.com#{path}")
@@ -46,29 +55,27 @@ end
 # Daily closing prices from a date until today, as [["2025-01-31", 1234.5], ...]
 # in Indian dates. Starts a week early so the day before `from` is included.
 def daily_history(symbol, from)
-  key = "#{symbol}|#{from}"
-  cached = HISTORY_CACHE[key]
-  return cached[:points] if cached && Time.now - cached[:at] < HISTORY_TTL
+  cached("history|#{symbol}|#{from}", 600) do
+    start = Time.new(from.year, from.month, from.day, 0, 0, 0, '+05:30').to_i - 7 * 86_400
+    chart = yahoo("/v8/finance/chart/#{URI.encode_www_form_component(symbol)}",
+                  period1: start, period2: Time.now.to_i, interval: '1d')['chart']
+    result = chart.dig('result', 0)
+    raise(chart.dig('error', 'description') || "No price history for #{symbol}.") unless result && result['timestamp']
 
-  start = Time.new(from.year, from.month, from.day, 0, 0, 0, '+05:30').to_i - 7 * 86_400
-  chart = yahoo("/v8/finance/chart/#{URI.encode_www_form_component(symbol)}",
-                period1: start, period2: Time.now.to_i, interval: '1d')['chart']
-  result = chart.dig('result', 0)
-  raise(chart.dig('error', 'description') || "No price history for #{symbol}.") unless result && result['timestamp']
-
-  closes = result.dig('indicators', 'quote', 0, 'close') || []
-  by_day = {}
-  result['timestamp'].zip(closes).each do |t, c|
-    by_day[Time.at(t).getlocal('+05:30').strftime('%Y-%m-%d')] = c unless c.nil?
+    closes = result.dig('indicators', 'quote', 0, 'close') || []
+    by_day = {}
+    result['timestamp'].zip(closes).each do |t, c|
+      by_day[Time.at(t).getlocal('+05:30').strftime('%Y-%m-%d')] = c unless c.nil?
+    end
+    by_day.to_a
   end
-  points = by_day.to_a
-  HISTORY_CACHE[key] = { at: Time.now, points: points }
-  points
 end
 
-def send_json(res, status, body)
+# cache_seconds also tells the browser it may reuse the answer for that long.
+def send_json(res, status, body, cache_seconds = 0)
   res.status = status
   res['Content-Type'] = 'application/json'
+  res['Cache-Control'] = "public, max-age=#{cache_seconds}" if status == 200 && cache_seconds.positive?
   res.body = JSON.generate(body)
 end
 
@@ -85,12 +92,14 @@ server.mount_proc('/api/search') do |req, res|
   q = req.query['q'].to_s.strip
   next send_json(res, 400, error: 'Enter a stock name.') if q.empty?
   begin
-    data = yahoo('/v1/finance/search', q: q, quotesCount: 15, newsCount: 0, region: 'IN')
-    matches = (data['quotes'] || [])
-              .select { |s| s['quoteType'] == 'EQUITY' && INDIAN_EXCHANGES.key?(s['exchange']) }
-              .sort_by { |s| s['exchange'] == 'NSI' ? 0 : 1 }
-              .map { |s| { symbol: s['symbol'], name: s['longname'] || s['shortname'], exchange: INDIAN_EXCHANGES[s['exchange']] } }
-    send_json(res, 200, matches: matches)
+    matches = cached("search|#{q.downcase}", 3600) do
+      data = yahoo('/v1/finance/search', q: q, quotesCount: 15, newsCount: 0, region: 'IN')
+      (data['quotes'] || [])
+        .select { |s| s['quoteType'] == 'EQUITY' && INDIAN_EXCHANGES.key?(s['exchange']) }
+        .sort_by { |s| s['exchange'] == 'NSI' ? 0 : 1 }
+        .map { |s| { symbol: s['symbol'], name: s['longname'] || s['shortname'], exchange: INDIAN_EXCHANGES[s['exchange']] } }
+    end
+    send_json(res, 200, { matches: matches }, 3600)
   rescue StandardError => e
     send_json(res, 502, error: e.message)
   end
@@ -150,6 +159,11 @@ server.mount_proc('/api/chart') do |req, res|
   rescue StandardError => e
     send_json(res, 502, error: e.message)
   end
+end
+
+server.mount_proc('/config.js') do |_req, res|
+  res['Content-Type'] = 'text/javascript'
+  res.body = File.read(File.join(ROOT, 'config.js'))
 end
 
 server.mount_proc('/portfolio') do |_req, res|
