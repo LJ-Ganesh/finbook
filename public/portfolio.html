@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Portfolio</title>
+<style>
+:root{--bg:#f6f7fb;--panel:#fff;--text:#14182a;--muted:#5d6680;--line:#dde1ec;--accent:#3b5bdb;--on-accent:#fff;--up:#1a7f4b;--down:#c0392b;
+  --c-port:#3b5bdb;--c-nifty:#e8590c;--c-mid:#ae3ec9;--c-small:#0c8f6a}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1020;--panel:#121a2e;--text:#f3f6fc;--muted:#a7b2c8;--line:#26324b;--accent:#8ba5ff;--on-accent:#071027;--up:#79e0b0;--down:#ff9caa;
+  --c-port:#8ba5ff;--c-nifty:#ff922b;--c-mid:#da77f2;--c-small:#38d9a9}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{width:min(1000px,100%);margin:0 auto;padding:24px 16px 48px}
+nav{display:flex;gap:16px;font-size:.92rem;margin-bottom:14px}nav a{color:var(--muted);text-decoration:none}nav a[aria-current]{color:var(--text);font-weight:700}
+h1{font-size:clamp(1.8rem,6vw,2.4rem);line-height:1.1;letter-spacing:-.03em;margin:0 0 .3rem}
+h2{font-size:1.1rem;margin:0 0 4px}
+.muted,.hint,.status{color:var(--muted)}.hint,.status{font-size:.88rem}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:16px}
+.form{display:grid;grid-template-columns:2fr 1.4fr 1fr 1fr auto;gap:10px;align-items:end}
+.form label{font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
+input,select,button{font:inherit;border-radius:10px;padding:10px 12px;border:1px solid var(--line)}
+input,select{width:100%;min-width:0;background:var(--bg);color:var(--text)}
+button{cursor:pointer;background:var(--accent);color:var(--on-accent);border:0;font-weight:700}
+button:disabled{opacity:.6;cursor:wait}
+.status{margin-top:10px;white-space:pre-wrap}.error{color:var(--down)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:16px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.tile span{font-size:.82rem;color:var(--muted)}.tile b{display:block;font-size:1.3rem;letter-spacing:-.01em}
+.tile small{font-size:.82rem}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.ranges{display:flex;flex-wrap:wrap;gap:4px}
+.ranges button{background:none;color:var(--muted);border:1px solid transparent;font-weight:600;font-size:.85rem;padding:5px 10px}
+.ranges button[aria-pressed="true"]{background:var(--bg);color:var(--text);border-color:var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 4px;font-size:.86rem}
+.legend label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.legend input{width:auto;accent-color:var(--accent)}
+.swatch{width:14px;height:3px;border-radius:2px;display:inline-block}
+.readout{font-size:.86rem;min-height:2.8em;margin:6px 0;color:var(--muted)}
+.readout b{color:var(--text)}
+.chart{position:relative;height:300px}.chart.short{height:220px}
+.chart svg{display:block;width:100%;height:100%;touch-action:none}
+.chart .msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.9rem;text-align:center;padding:0 20px}
+.axis{fill:var(--muted);font-size:11px}
+.summary{font-size:.95rem;margin:8px 0 0}
+.summary b.win{color:var(--up)}.summary b.lose{color:var(--down)}
+.key{display:flex;gap:14px;font-size:.82rem;color:var(--muted);margin-top:6px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem;white-space:nowrap}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right}
+th{font-size:.78rem;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td small{display:block;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis}
+tfoot td{font-weight:700;border-bottom:0}
+.pos{color:var(--up)}.neg{color:var(--down)}
+.remove{background:none;color:var(--muted);padding:4px 8px;font-weight:500}
+.remove:hover{color:var(--down)}
+.backup{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.backup .hint{flex:1;min-width:220px}
+.secondary{background:var(--bg);color:var(--text);border:1px solid var(--line);font-weight:600;padding:7px 14px}
+@media(max-width:720px){.form{grid-template-columns:1fr 1fr}.form .wide{grid-column:1/-1}.form button{grid-column:1/-1}}
+</style>
+</head>
+<body><main>
+<nav><a href="/">Stock lookup</a><a href="/portfolio" aria-current="page">Portfolio</a></nav>
+<h1>My portfolio</h1>
+<p class="muted">Add each purchase. Your returns are compared with the Nifty indices day by day.</p>
+
+<section class="card">
+  <h2>Add a purchase</h2>
+  <form id="addForm" class="form">
+    <div class="wide"><label for="symbol">Ticker</label><input id="symbol" placeholder="TCS, RELIANCE, INFY.BO" required autocomplete="off"></div>
+    <div><label for="date">Purchase date</label><input id="date" type="date" required></div>
+    <div><label for="price">Avg price (₹)</label><input id="price" type="number" step="0.01" min="0.01" required></div>
+    <div><label for="qty">Quantity</label><input id="qty" type="number" step="1" min="1" required></div>
+    <button id="addBtn">Add</button>
+  </form>
+  <div id="formStatus" class="status" role="status" aria-live="polite"></div>
+  <p class="hint">NSE is used unless you add .BO for BSE. Buying the same stock again on another date? Add it as a separate purchase.</p>
+  <div class="backup">
+    <span class="hint">Your portfolio is saved only in this browser. Export it to keep a backup or move it to another device.</span>
+    <button type="button" class="secondary" id="exportBtn">Export</button>
+    <button type="button" class="secondary" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+</section>
+
+<div id="status" class="status" role="status" aria-live="polite"></div>
+<div id="content" hidden>
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card">
+    <div class="head">
+      <div><h2>Portfolio vs indices</h2><div class="hint">Percentage return over the period. New purchases don't make the line jump: only price moves count.</div></div>
+      <div class="ranges" id="ranges" role="group" aria-label="Chart period">
+        <button type="button" data-months="1">1M</button><button type="button" data-months="3">3M</button>
+        <button type="button" data-months="6">6M</button><button type="button" data-months="12">1Y</button>
+        <button type="button" data-months="36">3Y</button><button type="button" data-months="0">All</button>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="readout" id="lineReadout"></div>
+    <div class="chart"><svg id="lineSvg" aria-label="Portfolio and index returns"></svg><div class="msg" id="lineMsg"></div></div>
+  </section>
+
+  <section class="card">
+    <div class="head">
+      <div><h2>Who won each day?</h2><div class="hint">Each bar is one trading day: your portfolio's daily return minus the index's.</div></div>
+      <select id="beatIndex" aria-label="Index to compare" style="width:auto"></select>
+    </div>
+    <p class="summary" id="beatSummary"></p>
+    <div class="key"><span><i style="background:var(--up)"></i>You beat the index</span><span><i style="background:var(--down)"></i>Index beat you</span></div>
+    <div class="readout" id="barReadout"></div>
+    <div class="chart short"><svg id="barSvg" aria-label="Daily portfolio minus index return"></svg><div class="msg" id="barMsg"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Holdings</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Stock</th><th>Bought</th><th>Qty</th><th>Avg price</th><th>Invested</th><th>Price now</th><th>Value</th><th>P&amp;L</th><th>P&amp;L %</th><th>Weight</th><th></th></tr></thead>
+      <tbody id="rows"></tbody><tfoot id="totals"></tfoot>
+    </table></div>
+  </section>
+  <p class="hint">Prices are daily closes from Yahoo Finance (today's is the latest price), adjusted for splits. Dividends are not included. Yahoo has no history for Nifty Midcap 100, Smallcap 100 or Microcap 250, so Midcap 150 and Smallcap 250 are used.</p>
+</div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const inr = (n, dp = 2) => n == null || !isFinite(n) ? '—' :
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: dp, minimumFractionDigits: dp }).format(n);
+const pct = (n, dp = 2) => n == null || !isFinite(n) ? '—' : `${n >= 0 ? '+' : ''}${(n * 100).toFixed(dp)}%`;
+const signed = n => `${n >= 0 ? '+' : ''}${inr(n)}`;
+const cls = n => n > 0 ? 'pos' : n < 0 ? 'neg' : '';
+const niceDate = (d, opts = { day: 'numeric', month: 'short', year: 'numeric' }) =>
+  new Date(d + 'T00:00:00').toLocaleDateString('en-IN', opts);
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const COLORS = { portfolio: 'var(--c-port)', '^NSEI': 'var(--c-nifty)', 'NIFTYMIDCAP150.NS': 'var(--c-mid)', 'NIFTYSMLCAP250.NS': 'var(--c-small)' };
+
+async function api(path, options) {
+  let res;
+  try { res = await fetch(path, options); }
+  catch { throw new Error('The local server is not running. Double-click "Start Stock Price.command" and try again.'); }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Server error (${res.status}).`);
+  return data;
+}
+function setStatus(node, text, isError) { node.textContent = text; node.className = 'status' + (isError ? ' error' : ''); }
+
+let holdings = [], indices = [], model = null;
+let months = 0, hidden = new Set();
+
+// ---------- Saved purchases (in this browser) ----------
+const STORE_KEY = 'portfolio';
+function readHoldings() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
+}
+function writeHoldings(list) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+  catch { throw new Error('This browser is not allowing the page to save data (private browsing?). Use Export to keep a copy.'); }
+}
+// Checks one purchase and returns it in the saved format, or throws a readable error.
+function cleanHolding(h) {
+  const symbol = String(h.symbol || '').trim().toUpperCase();
+  const full = symbol.includes('.') ? symbol : symbol + '.NS';
+  if (!/^[A-Z0-9&-]+\.(NS|BO)$/.test(full)) throw new Error('Enter an NSE or BSE ticker, e.g. TCS or TCS.BO.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(h.date || '')) throw new Error('Enter the purchase date.');
+  if (h.date > today) throw new Error('Purchase date cannot be in the future.');
+  if (!(+h.price > 0)) throw new Error('Average price must be more than 0.');
+  if (!(+h.quantity > 0)) throw new Error('Quantity must be more than 0.');
+  return { id: h.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+           symbol: full, name: h.name || full, date: h.date, price: +h.price, quantity: +h.quantity };
+}
+
+// ---------- Add / remove purchases ----------
+const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+$('date').max = today; $('date').value = today;
+
+$('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('addBtn').disabled = true;
+  setStatus($('formStatus'), 'Checking ticker and adding…');
+  try {
+    const holding = cleanHolding({ symbol: $('symbol').value, date: $('date').value, price: $('price').value, quantity: $('qty').value });
+    // Make sure Yahoo knows the ticker, and get its full name.
+    const q = await api('/api/quote?symbol=' + encodeURIComponent(holding.symbol))
+      .catch(() => { throw new Error(`${holding.symbol} was not found on Yahoo Finance.`); });
+    holding.name = q.name;
+    writeHoldings([...readHoldings(), holding]);
+    setStatus($('formStatus'), `Added ${holding.quantity} × ${holding.name} (${holding.symbol}).`);
+    $('symbol').value = ''; $('price').value = ''; $('qty').value = '';
+    await load();
+  } catch (err) { setStatus($('formStatus'), err.message, true); }
+  finally { $('addBtn').disabled = false; }
+});
+
+async function removeHolding(h) {
+  if (!confirm(`Remove ${h.quantity} × ${h.symbol} bought on ${niceDate(h.date)}?`)) return;
+  try { writeHoldings(readHoldings().filter(x => x.id !== h.id)); await load(); }
+  catch (err) { setStatus($('status'), err.message, true); }
+}
+
+// ---------- Export / import ----------
+$('exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(readHoldings(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `portfolio-${today}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const list = JSON.parse(await file.text());
+    if (!Array.isArray(list)) throw new Error('This is not a portfolio export file.');
+    const clean = list.map(cleanHolding);
+    const current = readHoldings();
+    if (current.length && !confirm(`Replace your ${current.length} saved purchase(s) with the ${clean.length} in this file?`)) return;
+    writeHoldings(clean);
+    setStatus($('formStatus'), `Imported ${clean.length} purchase(s).`);
+    await load();
+  } catch (err) { setStatus($('formStatus'), 'Import failed: ' + err.message, true); }
+};
+
+// ---------- Load data and build the day-by-day model ----------
+async function load() {
+  try {
+    setStatus($('status'), 'Loading portfolio…');
+    holdings = readHoldings();
+    if (!indices.length) ({ indices } = await api('/api/indices'));
+    if (!holdings.length) { $('content').hidden = true; setStatus($('status'), 'No purchases yet. Add your first one above.'); return; }
+    const start = holdings.map(h => h.date).sort()[0];
+    const symbols = [...new Set(holdings.map(h => h.symbol))];
+    setStatus($('status'), `Downloading price history for ${symbols.length} stock${symbols.length > 1 ? 's' : ''} and ${indices.length} indices…`);
+    const fetchHistory = s => api(`/api/history?symbol=${encodeURIComponent(s)}&from=${start}`).then(d => d.points);
+    const stockHist = await Promise.all(symbols.map(fetchHistory));
+    // An index that fails to load is left out rather than breaking the page.
+    const indexHist = await Promise.all(indices.map(i => fetchHistory(i.symbol).catch(() => null)));
+    model = buildModel(start, symbols, stockHist, indexHist);
+    setStatus($('status'), '');
+    $('content').hidden = false;
+    render();
+  } catch (err) { setStatus($('status'), 'Could not load the portfolio: ' + err.message, true); }
+}
+
+function buildModel(start, symbols, stockHist, indexHist) {
+  const all = [...stockHist, ...indexHist.filter(Boolean)];
+  const allDates = [...new Set(all.flatMap(h => h.map(p => p[0])))].sort();
+  // The calendar starts on the last trading day before the first purchase,
+  // so every line can start from 0% there.
+  let first = allDates.findIndex(d => d >= start);
+  if (first < 0) first = allDates.length - 1;
+  const dates = allDates.slice(Math.max(0, first - 1));
+
+  // Price on each calendar day, carrying the last known close over gaps.
+  const align = hist => {
+    const map = new Map(hist), out = []; let last = null;
+    for (const d of allDates) { if (map.has(d)) last = map.get(d); if (d >= dates[0]) out.push(last); }
+    return out;
+  };
+  const prices = Object.fromEntries(symbols.map((s, i) => [s, align(stockHist[i])]));
+
+  const lots = holdings.map(h => {
+    let day = dates.findIndex(d => d >= h.date);
+    if (day < 0) day = dates.length - 1;
+    return { ...h, day };
+  });
+
+  // Time-weighted return: each day's return is the gain on what was held,
+  // with money added that day counted at its purchase price. Adding a stock
+  // therefore never moves the line by itself; only price changes do.
+  const value = [], invested = [], flow = [], daily = [], growth = [];
+  let level = 1;
+  dates.forEach((d, i) => {
+    let v = 0, inv = 0, cf = 0;
+    for (const l of lots) {
+      if (l.day > i) continue;
+      const p = prices[l.symbol][i] ?? l.price;
+      v += l.quantity * p; inv += l.quantity * l.price;
+      if (l.day === i) cf += l.quantity * l.price;
+    }
+    const prev = i ? value[i - 1] : 0;
+    const r = prev > 0 ? (v - cf) / prev - 1 : cf > 0 ? v / cf - 1 : 0;
+    level *= 1 + r;
+    value.push(v); invested.push(inv); flow.push(cf); daily.push(i && (prev > 0 || cf > 0) ? r : null); growth.push(level);
+  });
+
+  const series = [{ key: 'portfolio', name: 'My portfolio', growth, daily }];
+  indices.forEach((ix, n) => {
+    if (!indexHist[n]) return;
+    const p = align(indexHist[n]);
+    series.push({ key: ix.symbol, name: ix.name, growth: p,
+                  daily: p.map((v, i) => i && v != null && p[i - 1] != null ? v / p[i - 1] - 1 : null) });
+  });
+  const buys = dates.map((_, i) => lots.filter(l => l.day === i));
+  return { dates, value, invested, flow, series, lots, prices, buys };
+}
+
+// ---------- Render ----------
+function render() {
+  renderTiles(); renderTable(); renderLegend(); renderBeatSelect();
+  drawLines(); drawBars();
+}
+
+function renderTiles() {
+  const { value, invested, flow, series } = model, n = value.length - 1;
+  const v = value[n], inv = invested[n], pnl = v - inv;
+  const todayPnl = n ? v - value[n - 1] - flow[n] : 0;
+  const g = series[0].growth, twr = g[n] / g[0] - 1;
+  const nifty = series.find(s => s.key === '^NSEI');
+  const niftyR = nifty && nifty.growth[0] ? nifty.growth[n] / nifty.growth[0] - 1 : null;
+  $('tiles').innerHTML = `
+    <div class="tile"><span>Invested</span><b>${inr(inv, 0)}</b></div>
+    <div class="tile"><span>Current value</span><b>${inr(v, 0)}</b></div>
+    <div class="tile"><span>Total P&amp;L</span><b class="${cls(pnl)}">${signed(pnl)}</b><small class="${cls(pnl)}">${pct(pnl / inv)}</small></div>
+    <div class="tile"><span>Today</span><b class="${cls(todayPnl)}">${signed(todayPnl)}</b><small class="muted">${niceDate(model.dates[n])}</small></div>
+    <div class="tile"><span>Time-weighted return</span><b class="${cls(twr)}">${pct(twr)}</b>
+      <small class="muted">Nifty 50 same period: <span class="${cls(niftyR)}">${pct(niftyR)}</span></small></div>`;
+}
+
+function renderTable() {
+  const n = model.dates.length - 1, total = model.value[n];
+  const rows = [...model.lots].sort((a, b) => a.date.localeCompare(b.date) || a.symbol.localeCompare(b.symbol));
+  $('rows').innerHTML = '';
+  let inv = 0;
+  for (const l of rows) {
+    const now = model.prices[l.symbol][n] ?? l.price, cost = l.quantity * l.price, val = l.quantity * now, pnl = val - cost;
+    inv += cost;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><b>${l.symbol.replace(/\.NS$/, '')}</b><small>${l.name}</small></td>
+      <td>${niceDate(l.date)}</td><td>${l.quantity}</td><td>${inr(l.price)}</td><td>${inr(cost)}</td>
+      <td>${inr(now)}</td><td>${inr(val)}</td><td class="${cls(pnl)}">${signed(pnl)}</td>
+      <td class="${cls(pnl)}">${pct(pnl / cost)}</td><td>${(val / total * 100).toFixed(1)}%</td><td></td>`;
+    const btn = document.createElement('button');
+    btn.className = 'remove'; btn.type = 'button'; btn.textContent = '✕'; btn.title = 'Remove this purchase';
+    btn.onclick = () => removeHolding(l);
+    tr.lastElementChild.appendChild(btn);
+    $('rows').appendChild(tr);
+  }
+  const pnl = total - inv;
+  $('totals').innerHTML = `<tr><td>Total</td><td></td><td></td><td></td><td>${inr(inv)}</td><td></td><td>${inr(total)}</td>
+    <td class="${cls(pnl)}">${signed(pnl)}</td><td class="${cls(pnl)}">${pct(pnl / inv)}</td><td>100%</td><td></td></tr>`;
+}
+
+function renderLegend() {
+  $('legend').innerHTML = '';
+  for (const s of model.series) {
+    const label = document.createElement('label');
+    label.innerHTML = `<input type="checkbox" ${hidden.has(s.key) ? '' : 'checked'}><span class="swatch" style="background:${COLORS[s.key]}"></span>${s.name}`;
+    label.querySelector('input').onchange = e => { e.target.checked ? hidden.delete(s.key) : hidden.add(s.key); drawLines(); };
+    $('legend').appendChild(label);
+  }
+}
+
+function renderBeatSelect() {
+  const sel = $('beatIndex'), keep = sel.value;
+  sel.innerHTML = model.series.slice(1).map(s => `<option value="${s.key}">${s.name}</option>`).join('');
+  if (keep && model.series.some(s => s.key === keep)) sel.value = keep;
+}
+$('beatIndex').onchange = () => drawBars();
+
+document.querySelectorAll('#ranges button').forEach(b => b.onclick = () => { months = +b.dataset.months; drawLines(); drawBars(); });
+
+// First day index of the chosen period.
+function windowStart() {
+  const { dates } = model;
+  if (!months) return 0;
+  const end = new Date(dates[dates.length - 1] + 'T00:00:00');
+  end.setMonth(end.getMonth() - months);
+  const cutoff = end.toLocaleDateString('en-CA');
+  let i = dates.length - 1;
+  while (i > 0 && dates[i - 1] >= cutoff) i--;
+  return Math.max(0, i - 1);
+}
+
+function el(name, attrs, parent) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const k in attrs) node.setAttribute(k, attrs[k]);
+  parent.appendChild(node);
+  return node;
+}
+function niceStep(x) { const e = 10 ** Math.floor(Math.log10(x)), f = x / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; }
+
+function yAxis(svg, min, max, y, W, pad, fmt) {
+  const step = niceStep((max - min) / 4 || 0.01);
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-12; v += step) {
+    el('line', { x1: pad.left, x2: W - pad.right, y1: y(v), y2: y(v), stroke: 'var(--line)', 'stroke-dasharray': Math.abs(v) < 1e-12 ? '' : '2 4' }, svg);
+    el('text', { x: pad.left - 6, y: y(v) + 4, class: 'axis', 'text-anchor': 'end' }, svg).textContent = fmt(v);
+  }
+}
+function xLabels(svg, dates, s, x, H) {
+  const last = dates.length - 1, mid = Math.round((s + last) / 2);
+  [[s, 'start'], [mid, 'middle'], [last, 'end']].forEach(([i, anchor]) =>
+    el('text', { x: x(i), y: H - 6, class: 'axis', 'text-anchor': anchor }, svg).textContent = niceDate(dates[i]));
+}
+
+function drawLines() {
+  document.querySelectorAll('#ranges button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.months === months));
+  const svg = $('lineSvg'); svg.innerHTML = ''; $('lineMsg').textContent = '';
+  const { dates, series } = model, s = windowStart(), last = dates.length - 1;
+  if (last - s < 1) { $('lineMsg').textContent = 'Not enough trading days yet. The chart appears after your first full day.'; $('lineReadout').textContent = ''; return; }
+  // Each line shows % change from the first day of the period.
+  const shown = series.filter(x => !hidden.has(x.key) && x.growth[s] != null).map(x => ({
+    ...x, pts: x.growth.map((g, i) => i < s || g == null ? null : g / x.growth[s] - 1)
+  }));
+  const W = svg.clientWidth, H = svg.clientHeight, pad = { top: 10, right: 12, bottom: 24, left: 52 };
+  const vals = shown.flatMap(x => x.pts.filter(v => v != null)).concat(0);
+  const min = Math.min(...vals), max = Math.max(...vals), span = max - min || 0.01;
+  const x = i => pad.left + (i - s) / (last - s) * (W - pad.left - pad.right);
+  const y = v => pad.top + (max - v) / span * (H - pad.top - pad.bottom);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  yAxis(svg, min, max, y, W, pad, v => `${(v * 100).toFixed(Math.abs(span) < 0.05 ? 1 : 0)}%`);
+  xLabels(svg, dates, s, x, H);
+  // Small ticks on the bottom axis mark the days you bought something.
+  model.buys.forEach((b, i) => { if (b.length && i >= s) el('path', { d: `M${x(i)},${H - pad.bottom}l-4,6h8z`, fill: 'var(--c-port)' }, svg); });
+  for (const line of [...shown].reverse()) {
+    let d = '';
+    line.pts.forEach((v, i) => { if (v != null) d += `${d ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`; });
+    el('path', { d, fill: 'none', stroke: COLORS[line.key], 'stroke-width': line.key === 'portfolio' ? 2.5 : 1.5, 'stroke-linejoin': 'round' }, svg);
+  }
+  const guide = el('line', { y1: pad.top, y2: H - pad.bottom, stroke: 'var(--muted)', 'stroke-opacity': 0 }, svg);
+  const dots = shown.map(line => el('circle', { r: 3.5, fill: COLORS[line.key], 'fill-opacity': 0 }, svg));
+  const show = i => {
+    const parts = shown.map(l => `<span style="color:${COLORS[l.key]}">●</span> ${l.name} <b>${pct(l.pts[i])}</b>`);
+    const bought = model.buys[i].map(l => `${l.quantity} × ${l.symbol.replace(/\.NS$/, '')}`);
+    $('lineReadout').innerHTML = `<b>${niceDate(dates[i], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</b> · ${parts.join(' &nbsp; ')}` +
+      (bought.length ? `<br>Bought: ${bought.join(', ')}` : '');
+  };
+  svg.onpointermove = e => {
+    const r = svg.getBoundingClientRect();
+    const i = Math.max(s, Math.min(last, Math.round(s + (e.clientX - r.left - pad.left) / (W - pad.left - pad.right) * (last - s))));
+    guide.setAttribute('x1', x(i)); guide.setAttribute('x2', x(i)); guide.setAttribute('stroke-opacity', .5);
+    shown.forEach((l, n) => { if (l.pts[i] != null) { dots[n].setAttribute('cx', x(i)); dots[n].setAttribute('cy', y(l.pts[i])); dots[n].setAttribute('fill-opacity', 1); } });
+    show(i);
+  };
+  svg.onpointerleave = () => { guide.setAttribute('stroke-opacity', 0); dots.forEach(d => d.setAttribute('fill-opacity', 0)); show(last); };
+  show(last);
+}
+
+function drawBars() {
+  const svg = $('barSvg'); svg.innerHTML = ''; $('barMsg').textContent = '';
+  const { dates, series } = model, s = windowStart(), last = dates.length - 1;
+  const port = series[0], idx = series.find(x => x.key === $('beatIndex').value);
+  if (!idx) { $('barMsg').textContent = 'Index data is unavailable right now.'; $('beatSummary').textContent = ''; return; }
+  // One bar per trading day where both have a return.
+  const days = [];
+  for (let i = s + 1; i <= last; i++)
+    if (port.daily[i] != null && idx.daily[i] != null) days.push({ i, p: port.daily[i], m: idx.daily[i], d: port.daily[i] - idx.daily[i] });
+  if (!days.length) { $('barMsg').textContent = 'Not enough trading days yet.'; $('beatSummary').textContent = ''; $('barReadout').textContent = ''; return; }
+
+  const lost = days.filter(x => x.d < 0).length, won = days.filter(x => x.d > 0).length;
+  $('beatSummary').innerHTML = `${idx.name} beat your portfolio on <b class="lose">${lost}</b> of ${days.length} trading days (${Math.round(lost / days.length * 100)}%). ` +
+    `You beat it on <b class="win">${won}</b>.`;
+
+  const W = svg.clientWidth, H = svg.clientHeight, pad = { top: 10, right: 12, bottom: 24, left: 52 };
+  const ext = Math.max(...days.map(x => Math.abs(x.d)), 0.001);
+  const y = v => pad.top + (ext - v) / (2 * ext) * (H - pad.top - pad.bottom);
+  const slot = (W - pad.left - pad.right) / days.length;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  yAxis(svg, -ext, ext, y, W, pad, v => `${v > 0 ? '+' : ''}${(v * 100).toFixed(ext < 0.02 ? 1 : 0)}%`);
+  const bars = days.map((x, n) => el('rect', {
+    x: pad.left + n * slot + (slot > 4 ? slot * 0.15 : 0), width: Math.max(1, slot > 4 ? slot * 0.7 : slot),
+    y: Math.min(y(0), y(x.d)), height: Math.max(1, Math.abs(y(x.d) - y(0))),
+    fill: x.d >= 0 ? 'var(--up)' : 'var(--down)', 'fill-opacity': .85
+  }, svg));
+  const xi = n => pad.left + (n + 0.5) * slot;
+  [[0, 'start'], [Math.floor(days.length / 2), 'middle'], [days.length - 1, 'end']].forEach(([n, anchor]) =>
+    el('text', { x: anchor === 'start' ? pad.left : anchor === 'end' ? W - pad.right : xi(n), y: H - 6, class: 'axis', 'text-anchor': anchor }, svg).textContent = niceDate(dates[days[n].i]));
+
+  const show = n => {
+    const x = days[n];
+    const who = x.d > 0 ? `<b class="pos">You beat ${idx.name}</b>` : x.d < 0 ? `<b class="neg">${idx.name} beat you</b>` : '<b>Tie</b>';
+    $('barReadout').innerHTML = `<b>${niceDate(dates[x.i], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</b> · ${who} by ${(Math.abs(x.d) * 100).toFixed(2)} pts` +
+      `<br>Your portfolio <b class="${cls(x.p)}">${pct(x.p)}</b> &nbsp; ${idx.name} <b class="${cls(x.m)}">${pct(x.m)}</b>`;
+    bars.forEach((b, k) => b.setAttribute('fill-opacity', k === n ? 1 : .45));
+  };
+  svg.onpointermove = e => {
+    const r = svg.getBoundingClientRect();
+    show(Math.max(0, Math.min(days.length - 1, Math.floor((e.clientX - r.left - pad.left) / slot))));
+  };
+  svg.onpointerleave = () => { bars.forEach(b => b.setAttribute('fill-opacity', .85)); $('barReadout').innerHTML = 'Hover over a bar to see that day.'; };
+  svg.onpointerleave();
+}
+
+window.addEventListener('resize', () => { if (model && !$('content').hidden) { drawLines(); drawBars(); } });
+load();
+</script>
+</body></html>
