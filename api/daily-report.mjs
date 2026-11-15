@@ -154,7 +154,7 @@ async function commentary(facts) {
       model: env('LLM_MODEL') || 'gemini-3.8-flash',
       messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: JSON.stringify(facts, null, 1) }]
     }),
-    signal: AbortSignal.timeout(30000)
+    signal: AbortSignal.timeout(45000)
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`LLM: ${body.error?.message || body[0]?.error?.message || res.status}`);
