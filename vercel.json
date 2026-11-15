@@ -3,5 +3,8 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/api/:route", "destination": "/api/index?route=:route" }
+  ],
+  "crons": [
+    { "path": "/api/daily-report", "schedule": "45 10 * * 1-5" }
   ]
 }
