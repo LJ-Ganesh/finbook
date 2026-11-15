@@ -18,14 +18,14 @@ const CHART_RANGES = {
 };
 // Indices to compare the portfolio against. Yahoo only has history for these
 // broad Nifty indices (Midcap 100, Smallcap 100 and Microcap 250 have no history there).
-const INDICES = {
+export const INDICES = {
   '^NSEI': 'Nifty 50',
   'NIFTYMIDCAP150.NS': 'Nifty Midcap 150',
   'NIFTYSMLCAP250.NS': 'Nifty Smallcap 250'
 };
-const IST_OFFSET = 19800; // +05:30 in seconds
+export const IST_OFFSET = 19800; // +05:30 in seconds
 
-async function yahoo(path, params) {
+export async function yahoo(path, params) {
   const url = `https://query1.finance.yahoo.com${path}?${new URLSearchParams(params)}`;
   const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' } });
   if (res.status === 429) throw new Error('Yahoo is rate-limiting requests. Wait a minute and try again.');

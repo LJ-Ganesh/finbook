@@ -13,6 +13,7 @@ Each user signs in and their portfolio is saved to their own account (Supabase).
 | `public/config.js` | Your Supabase project URL and anon key |
 | `supabase/schema.sql` | Creates the portfolio table and its privacy rules |
 | `api/index.mjs` | Online server (Vercel Function): fetches prices from Yahoo for the pages |
+| `api/daily-report.mjs` | Daily portfolio report by email (Vercel Cron), see section 3 |
 | `vercel.json` | Vercel settings |
 | `server.rb`, `Start Stock Price.command` | Run it on your Mac instead (double-click the .command file) |
 
@@ -47,6 +48,57 @@ Each user signs in and their portfolio is saved to their own account (Supabase).
 
 Every commit to the main branch on GitHub redeploys the site automatically,
 usually within a minute. Check progress under the project's **Deployments** tab.
+
+## 3. Daily email report (optional)
+
+Every weekday at **4:15 PM IST** (after the market closes) Vercel runs
+`api/daily-report.mjs`. It reads your purchases from Supabase and works out:
+- today's gain or loss in ₹ and % for each stock and for the whole portfolio,
+- your overall gain or loss,
+- today's move in the Nifty 50, Midcap 150 and Smallcap 250.
+
+It then looks up news for your 5 biggest movers on Google News and asks a free
+LLM to explain the moves in a few lines. Finally it emails everything to you.
+The numbers are calculated in code; the LLM only writes the "why it
+moved" part. If the LLM fails, you still get the numbers and the top headlines.
+On market holidays nothing is sent.
+
+**Set up (one time):**
+
+1. **Email (Resend, free for 3,000 emails a month):** sign up at resend.com with
+   the email address you want the report at → **API Keys** → **Create API key**.
+   Without your own domain, Resend only sends to the address you signed up with,
+   which is all you need here.
+2. **Free LLM (Google Gemini):** go to aistudio.google.com → **Get API key** →
+   **Create API key**. Any other service with an OpenAI-style chat API works too
+   (Groq, OpenRouter, …): set `LLM_BASE_URL` and `LLM_MODEL` for it.
+3. **Supabase secret key:** Supabase → **Project Settings → API Keys** → copy the
+   **secret** key (`sb_secret_...`). It can read every user's data, so put it
+   only in Vercel's settings below, never in `public/config.js` or GitHub.
+4. **Your user id:** Supabase → **Authentication → Users** → click your email →
+   copy the **User UID**.
+5. In **Vercel → your project → Settings → Environment Variables**, add:
+
+   | Name | Value |
+   |---|---|
+   | `CRON_SECRET` | any long random password you make up (Vercel Cron sends it) |
+   | `SUPABASE_URL` | the Project URL, same as in `public/config.js` |
+   | `SUPABASE_SECRET_KEY` | the secret key from step 3 |
+   | `REPORT_USER_ID` | the User UID from step 4 |
+   | `RESEND_API_KEY` | the key from step 1 (`re_...`) |
+   | `REPORT_EMAIL` | the email you signed up to Resend with |
+   | `LLM_API_KEY` | the key from step 2 |
+   | `LLM_MODEL` | optional; default `gemini-2.5-flash`. Use whatever free model AI Studio lists now. |
+   | `LLM_BASE_URL` | optional; default is Gemini's. For Groq: `https://api.groq.com/openai/v1` |
+
+6. Redeploy (**Deployments → ⋯ → Redeploy**) so the settings take effect.
+
+**Try it:** open
+`https://your-name.vercel.app/api/daily-report?secret=YOUR_CRON_SECRET&preview=1&force=1`
+to see the email text without sending it (add `&html=1` to see it as it will
+look). Remove `&preview=1` to send it now. (`force=1` makes it run on days the market was closed.) The answer
+shows `llmError` if the LLM part failed. To change the time, edit `crons` in
+`vercel.json`; the schedule is in UTC (10:45 UTC = 4:15 PM IST).
 
 ## Caching
 
