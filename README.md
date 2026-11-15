@@ -1,6 +1,6 @@
 # Indian Stock Price & Portfolio
 
-Look up NSE/BSE stock prices with charts, and track a portfolio against the
+Look u NSE/BSE stock prices with charts, and track a portfolio against the
 Nifty 50, Nifty Midcap 150 and Nifty Smallcap 250. Prices come from Yahoo Finance.
 Each user signs in and their portfolio is saved to their own account (Supabase).
 
