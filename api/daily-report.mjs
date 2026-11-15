@@ -145,18 +145,28 @@ You get today's figures, already calculated, and recent news headlines for the b
 - Plain text only: no Markdown, asterisks, headings, tables or links. Under 800 characters.`;
 
 // Any OpenAI-compatible chat API works: Gemini (default), Groq, OpenRouter, ...
+// Thinking models (like Gemini 3.x) can spend so long thinking that they miss the
+// timeout; a short summary needs little of it. LLM_REASONING_EFFORT overrides the
+// level ("none" leaves it out, for providers that don't accept the setting).
 async function commentary(facts) {
   const base = (env('LLM_BASE_URL') || 'https://generativelanguage.googleapis.com/v1beta/openai').replace(/\/$/, '');
-  const res = await fetch(`${base}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env('LLM_API_KEY')}` },
-    body: JSON.stringify({
-      model: env('LLM_MODEL') || 'gemini-3.8-flash',
-      messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: JSON.stringify(facts, null, 1) }]
-    }),
-    signal: AbortSignal.timeout(45000)
-  });
-  const body = await res.json().catch(() => ({}));
+  const effort = env('LLM_REASONING_EFFORT') || (base.includes('generativelanguage.googleapis.com') ? 'low' : 'none');
+  const ask = async withEffort => {
+    const res = await fetch(`${base}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env('LLM_API_KEY')}` },
+      body: JSON.stringify({
+        model: env('LLM_MODEL') || 'gemini-3.8-flash',
+        ...(withEffort ? { reasoning_effort: effort } : {}),
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: JSON.stringify(facts, null, 1) }]
+      }),
+      signal: AbortSignal.timeout(45000)
+    });
+    return [res, await res.json().catch(() => ({}))];
+  };
+  let [res, body] = await ask(effort !== 'none');
+  // If the provider rejects the reasoning setting, ask again without it.
+  if (res.status === 400 && effort !== 'none' && /reasoning/i.test(JSON.stringify(body))) [res, body] = await ask(false);
   if (!res.ok) throw new Error(`LLM: ${body.error?.message || body[0]?.error?.message || res.status}`);
   const text = body.choices?.[0]?.message?.content?.trim();
   if (!text) throw new Error('LLM: empty answer');
