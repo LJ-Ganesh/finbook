@@ -151,7 +151,7 @@ async function commentary(facts) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env('LLM_API_KEY')}` },
     body: JSON.stringify({
-      model: env('LLM_MODEL') || 'gemini-2.5-flash',
+      model: env('LLM_MODEL') || 'gemini-3.8-flash',
       messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: JSON.stringify(facts, null, 1) }]
     }),
     signal: AbortSignal.timeout(30000)

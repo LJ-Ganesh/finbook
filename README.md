@@ -88,7 +88,7 @@ On market holidays nothing is sent.
    | `RESEND_API_KEY` | the key from step 1 (`re_...`) |
    | `REPORT_EMAIL` | the email you signed up to Resend with |
    | `LLM_API_KEY` | the key from step 2 |
-   | `LLM_MODEL` | optional; default `gemini-2.5-flash`. Use whatever free model AI Studio lists now. |
+   | `LLM_MODEL` | optional; default `gemini-3.8-flash`. Use whatever free model AI Studio lists now. |
    | `LLM_BASE_URL` | optional; default is Gemini's. For Groq: `https://api.groq.com/openai/v1` |
 
 6. Redeploy (**Deployments → ⋯ → Redeploy**) so the settings take effect.
