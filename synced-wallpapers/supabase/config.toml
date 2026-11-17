@@ -1,0 +1,52 @@
+# Supabase CLI config for local development (`supabase start`).
+project_id = "synced-wallpapers"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[realtime]
+enabled = true
+
+[storage]
+enabled = true
+file_size_limit = "2MiB"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+enable_signup = true
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+# Google is the only sign-in method. The Android app uses signInWithIdToken, so only the
+# client ids matter here; the secret is needed for the web OAuth flow, which we don't use.
+[auth.email]
+enable_signup = false
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_WEB_CLIENT_ID)"
+secret = "env(GOOGLE_WEB_CLIENT_SECRET)"
+# The Android app's ID token audience is the Web client id; also allow ID tokens whose
+# nonce check is done by Supabase (we send the raw nonce).
+skip_nonce_check = false
+
+[edge_runtime]
+enabled = true
+policy = "oneshot"
+
+[functions.send-push]
+verify_jwt = false   # called by the database with x-cron-secret
+
+[functions.purge-images]
+verify_jwt = false   # called by pg_cron with x-cron-secret
+
+[functions.delete-account]
+verify_jwt = true

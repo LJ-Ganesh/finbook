@@ -1,0 +1,126 @@
+-- Shared pgTAP helpers, included by each test file with \ir. Everything is created
+-- inside the test's transaction and rolled back afterwards.
+create schema if not exists tests;
+grant usage on schema tests to authenticated, anon;
+
+create or replace function tests.new_user(p_email text, p_name text default null)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare v uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, email, raw_user_meta_data)
+  values (v, p_email, jsonb_build_object('full_name', coalesce(p_name, split_part(p_email, '@', 1))));
+  return v;
+end $$;
+
+-- Act as a signed-in user (what PostgREST does with a user's JWT).
+create or replace function tests.login(p_uid uuid) returns void language plpgsql as $$
+begin
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', jsonb_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
+end $$;
+
+create or replace function tests.logout() returns void language plpgsql as $$
+begin
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims', '', true);
+end $$;
+
+-- A group whose admin is p_admin, plus members added directly (join flow is tested separately).
+create or replace function tests.group_with(p_admin uuid, p_members uuid[] default '{}', p_name text default 'Family', p_tz text default 'Asia/Kolkata')
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare v_gid uuid; v_uid uuid; i int := 1;
+begin
+  insert into public.groups (name, time_zone, admin_id) values (p_name, p_tz, p_admin) returning id into v_gid;
+  insert into public.group_members (group_id, user_id, joined_at) values (v_gid, p_admin, now() - interval '100 days');
+  foreach v_uid in array p_members loop
+    insert into public.group_members (group_id, user_id, joined_at) values (v_gid, v_uid, now() - interval '100 days' + i * interval '1 day');
+    i := i + 1;
+  end loop;
+  return v_gid;
+end $$;
+
+-- Propose as p_uid, "upload" the image, confirm it. Returns the proposal id.
+create or replace function tests.propose(p_uid uuid, p_gid uuid, p_start_in interval, p_length interval default interval '2 hours')
+returns uuid language plpgsql as $$
+declare v jsonb; v_id uuid;
+begin
+  perform tests.login(p_uid);
+  v := public.create_proposal(p_gid, now() + p_start_in, now() + p_start_in + p_length, 'HOME');
+  v_id := (v ->> 'proposal_id')::uuid;
+  perform tests.logout();
+  insert into storage.objects (bucket_id, name, owner) values ('proposal-images', v ->> 'image_path', p_uid);
+  perform tests.login(p_uid);
+  perform public.confirm_proposal_image(v_id);
+  perform tests.logout();
+  return v_id;
+end $$;
+
+-- Vote as a user.
+create or replace function tests.vote(p_uid uuid, p_pid uuid, p_decision text, p_reason text default null)
+returns jsonb language plpgsql as $$
+declare v jsonb;
+begin
+  perform tests.login(p_uid);
+  v := public.cast_vote(p_pid, p_decision, p_reason);
+  perform tests.logout();
+  return v;
+end $$;
+
+-- Move a proposal in time (as if the clock advanced), keeping the deadline rule.
+create or replace function tests.shift(p_pid uuid, p_start timestamptz, p_end timestamptz)
+returns void language sql security definer set search_path = '' as $$
+  update public.proposals set start_at = p_start, end_at = p_end, vote_deadline = p_start - interval '15 minutes',
+         created_at = least(created_at, p_start - interval '1 hour')
+  where id = p_pid
+$$;
+
+create or replace function tests.status(p_pid uuid) returns text language sql security definer set search_path = '' as $$
+  select status from public.proposals where id = p_pid
+$$;
+
+create or replace function tests.outbox_count(p_uid uuid, p_type text) returns int
+language sql security definer set search_path = '' as $$
+  select count(*)::int from public.notification_outbox where user_id = p_uid and type = p_type
+$$;
+
+grant execute on all functions in schema tests to authenticated;
+
+-- Named ids shared between statements (readable from any role, unlike temp tables).
+create or replace function tests.set_id(p_name text, p_id uuid) returns uuid language sql as $$
+  select set_config('tests.' || p_name, p_id::text, true)::uuid
+$$;
+create or replace function tests.set_id(p_name text, p_id text) returns uuid language sql as $$
+  select tests.set_id(p_name, p_id::uuid)
+$$;
+create or replace function tests.id(p_name text) returns uuid language sql stable as $$
+  select current_setting('tests.' || p_name)::uuid
+$$;
+
+-- Run SQL as a user and come back to postgres. If the SQL raises, the role change is
+-- rolled back with the failing subtransaction (that's how throws_ok catches it).
+create or replace function tests.as_user(p_uid uuid, p_sql text) returns void language plpgsql as $$
+begin
+  perform tests.login(p_uid);
+  execute p_sql;
+  perform tests.logout();
+end $$;
+
+create or replace function tests.as_user_json(p_uid uuid, p_sql text) returns jsonb language plpgsql as $$
+declare v jsonb;
+begin
+  perform tests.login(p_uid);
+  execute p_sql into v;
+  perform tests.logout();
+  return v;
+end $$;
+
+create or replace function tests.as_user_int(p_uid uuid, p_sql text) returns bigint language plpgsql as $$
+declare v bigint;
+begin
+  perform tests.login(p_uid);
+  execute p_sql into v;
+  perform tests.logout();
+  return v;
+end $$;
+
+grant execute on all functions in schema tests to authenticated;

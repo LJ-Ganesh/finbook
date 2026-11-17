@@ -1,0 +1,26 @@
+# Copy to local.properties (git-ignored) and fill in. Never commit real values.
+# Only the publishable/anon key ever goes here, never the service_role key.
+sdk.dir=/path/to/Android/sdk
+
+# Which backend the app talks to: "local" (supabase start) or "hosted".
+supabase.target=local
+
+# Local stack: values from `supabase status`. 10.0.2.2 is your machine as seen from the
+# Android emulator; on a real phone use your computer's LAN IP.
+supabase.local.url=http://10.0.2.2:54321
+supabase.local.anonKey=<anon key from supabase status>
+
+# Hosted project: Project Settings → API.
+supabase.hosted.url=https://<project-ref>.supabase.co
+supabase.hosted.anonKey=sb_publishable_<...>
+supabase.projectRef=<project-ref>
+
+# Google Cloud → APIs & Services → Credentials. The *Web* client id is the serverClientId.
+google.webClientId=<number>-<hash>.apps.googleusercontent.com
+
+# Firebase (push only, Spark plan). Project settings → General → Your apps → Android app.
+# Leave empty to run without push (reconciliation still keeps schedules in sync).
+firebase.appId=1:<sender>:android:<hash>
+firebase.apiKey=<api key>
+firebase.projectId=<project id>
+firebase.senderId=<sender id>
