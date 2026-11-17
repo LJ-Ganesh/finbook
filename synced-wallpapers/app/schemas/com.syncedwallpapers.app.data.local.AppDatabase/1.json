@@ -1,0 +1,151 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "855a0f96f28b4eb3cedfbac65f999c8b",
+    "entities": [
+      {
+        "tableName": "schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`proposalId` TEXT NOT NULL, `groupId` TEXT NOT NULL, `groupName` TEXT NOT NULL, `timeZone` TEXT NOT NULL, `startAt` INTEGER NOT NULL, `endAt` INTEGER NOT NULL, `target` TEXT NOT NULL, `imagePath` TEXT NOT NULL, `focalX` REAL NOT NULL, `focalY` REAL NOT NULL, `reminderText` TEXT, `reminderStyle` INTEGER NOT NULL, `deliveryMode` TEXT NOT NULL, `skipped` INTEGER NOT NULL, `state` TEXT NOT NULL, `homeFile` TEXT, `lockFile` TEXT, `appliedHomeId` INTEGER, `appliedLockId` INTEGER, `appliedLate` INTEGER NOT NULL, `tapNotified` INTEGER NOT NULL, `lastReported` TEXT, PRIMARY KEY(`proposalId`))",
+        "fields": [
+          {
+            "fieldPath": "proposalId",
+            "columnName": "proposalId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupId",
+            "columnName": "groupId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "groupName",
+            "columnName": "groupName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeZone",
+            "columnName": "timeZone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startAt",
+            "columnName": "startAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endAt",
+            "columnName": "endAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "target",
+            "columnName": "target",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imagePath",
+            "columnName": "imagePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "focalX",
+            "columnName": "focalX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "focalY",
+            "columnName": "focalY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reminderText",
+            "columnName": "reminderText",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reminderStyle",
+            "columnName": "reminderStyle",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deliveryMode",
+            "columnName": "deliveryMode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skipped",
+            "columnName": "skipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "homeFile",
+            "columnName": "homeFile",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lockFile",
+            "columnName": "lockFile",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "appliedHomeId",
+            "columnName": "appliedHomeId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "appliedLockId",
+            "columnName": "appliedLockId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "appliedLate",
+            "columnName": "appliedLate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tapNotified",
+            "columnName": "tapNotified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReported",
+            "columnName": "lastReported",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "proposalId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '855a0f96f28b4eb3cedfbac65f999c8b')"
+    ]
+  }
+}

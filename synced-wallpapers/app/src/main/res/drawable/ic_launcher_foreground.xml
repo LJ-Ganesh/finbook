@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two overlapping rounded "phones": one wallpaper on many screens. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#CFE3DA" android:pathData="M38,32h22a5,5 0,0 1,5 5v34a5,5 0,0 1,-5 5h-22a5,5 0,0 1,-5 -5v-34a5,5 0,0 1,5 -5z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M50,38h22a5,5 0,0 1,5 5v34a5,5 0,0 1,-5 5h-22a5,5 0,0 1,-5 -5v-34a5,5 0,0 1,5 -5z" />
+    <path android:fillColor="#3F6B5C" android:pathData="M49,70l7,-9 5,6 4,-5 8,8z" />
+    <path android:fillColor="#E8B04B" android:pathData="M66,52m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>
