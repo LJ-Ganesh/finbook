@@ -52,7 +52,8 @@ object TimeFormat {
         d.isNegative || d.isZero -> "ended"
         d.toMinutes() < 1 -> "less than a minute"
         d.toHours() < 1 -> "${d.toMinutes()}m"
-        d.toDays() < 1 -> "${d.toHours()}h ${d.toMinutesPart()}m"
-        else -> "${d.toDays()}d ${d.toHoursPart()}h"
+        // toMinutesPart()/toHoursPart() need API 31; compute the parts directly (minSdk 26).
+        d.toDays() < 1 -> "${d.toHours()}h ${d.toMinutes() % 60}m"
+        else -> "${d.toDays()}d ${d.toHours() % 24}h"
     }
 }

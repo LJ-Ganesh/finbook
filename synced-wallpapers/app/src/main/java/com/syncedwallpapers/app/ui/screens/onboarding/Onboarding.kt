@@ -41,7 +41,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -146,7 +145,7 @@ class OnboardingViewModel @Inject constructor(
 @Composable
 fun OnboardingScreen(signedIn: Boolean, onboardingDone: Boolean, vm: OnboardingViewModel = hiltViewModel()) {
     val state by vm.state.collectAsState()
-    val context = LocalContext.current
+    val activity = androidx.activity.compose.LocalActivity.current
     LaunchedEffect(signedIn, onboardingDone) { vm.start(signedIn, onboardingDone) }
     // Signed in from the sign-in-only step (returning user): onboarding is already done.
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp)) {
@@ -159,7 +158,7 @@ fun OnboardingScreen(signedIn: Boolean, onboardingDone: Boolean, vm: OnboardingV
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 when (step) {
                     Step.CONCEPT -> Concept(onNext = vm::next)
-                    Step.SIGN_IN -> SignIn(state.busy) { vm.signIn(context as Activity, onboardingDone) }
+                    Step.SIGN_IN -> SignIn(state.busy) { activity?.let { vm.signIn(it, onboardingDone) } }
                     Step.NAME -> NameStep(state, vm::setName, vm::setPhone, vm::saveName)
                     Step.HOME_WALLPAPER -> HomeWallpaperStep(state, vm::pickHome, vm::useSystemDefault, vm::next)
                     Step.HEALTH -> {

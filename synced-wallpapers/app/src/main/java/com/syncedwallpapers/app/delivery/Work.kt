@@ -141,8 +141,17 @@ class AlarmReceiver : BroadcastReceiver() {
 class SystemEventsReceiver : BroadcastReceiver() {
     @Inject lateinit var work: DeliveryWork
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action !in ACTIONS) return
         work.reconcileNow()
         work.schedulePeriodic()
+    }
+
+    companion object {
+        val ACTIONS = setOf(
+            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_LOCKED_BOOT_COMPLETED, Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_MY_PACKAGE_REPLACED,
+            "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED",
+        )
     }
 }
 

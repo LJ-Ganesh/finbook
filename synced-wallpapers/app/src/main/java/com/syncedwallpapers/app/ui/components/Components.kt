@@ -1,6 +1,5 @@
 package com.syncedwallpapers.app.ui.components
 
-import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
@@ -50,7 +49,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -63,7 +61,7 @@ import com.syncedwallpapers.app.ui.theme.Green
 /** Blocks screenshots and the recents thumbnail while a screen shows a proposal image. */
 @Composable
 fun SecureScreen() {
-    val activity = LocalContext.current as? Activity ?: return
+    val activity = androidx.activity.compose.LocalActivity.current ?: return
     DisposableEffect(Unit) {
         activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         onDispose { activity.window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
