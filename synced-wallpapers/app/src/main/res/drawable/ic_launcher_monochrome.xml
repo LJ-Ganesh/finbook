@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Scaled into the adaptive-icon safe zone (66dp circle) so no launcher shape clips it. -->
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.74" android:scaleY="0.74">
+    <path android:pathData="M37,33 V61 A15,15 0 0,0 52,76 H73" android:strokeWidth="13" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="#FF000000" android:fillColor="#00000000" />
+    <path android:pathData="M64.5,45.5 m-9.5,0 a9.5,9.5 0 1,0 19,0 a9.5,9.5 0 1,0 -19,0" android:fillColor="#FF000000" />
+    </group>
+</vector>

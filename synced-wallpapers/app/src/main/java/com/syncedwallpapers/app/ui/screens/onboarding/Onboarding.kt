@@ -189,6 +189,7 @@ private fun Bullet(icon: androidx.compose.ui.graphics.vector.ImageVector, title:
 
 @Composable
 private fun Concept(onNext: () -> Unit) {
+    BrandHeader()
     Text("One photo, everyone's phone", style = MaterialTheme.typography.headlineSmall)
     Text("Small trusted groups propose a photo and a time. If everyone approves, it becomes the wallpaper on every member's phone for that window, then your own wallpaper comes back.",
         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -203,6 +204,7 @@ private fun Concept(onNext: () -> Unit) {
 
 @Composable
 private fun SignIn(busy: Boolean, onSignIn: () -> Unit) {
+    BrandHeader()
     Text("Sign in", style = MaterialTheme.typography.headlineSmall)
     Text("Your Google account is your identity. Group members see your name and email; nobody else does.",
         color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -238,4 +240,13 @@ private fun androidx.compose.foundation.layout.ColumnScope.HomeWallpaperStep(sta
     }
     if (state.homeChosen != null) PrimaryButton("Continue", onClick = onNext)
     else TextButton(onClick = {}, enabled = false) { Text("Choose one option to continue") }
+}
+
+@Composable
+private fun BrandHeader() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(com.syncedwallpapers.app.R.drawable.ic_livrun_mark), contentDescription = null,
+            modifier = Modifier.padding(end = 10.dp))
+        Text("Livrun", style = MaterialTheme.typography.headlineMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+    }
 }

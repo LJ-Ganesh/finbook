@@ -46,8 +46,8 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent ?: return
-        // syncedwallpapers://join/CODE
-        intent.data?.takeIf { it.scheme == "syncedwallpapers" && it.host == "join" }?.lastPathSegment?.let { app.onInviteLink(it) }
+        // livrun://join/CODE (syncedwallpapers:// still accepted for links shared before the rename)
+        intent.data?.takeIf { it.scheme in setOf("livrun", "syncedwallpapers") && it.host == "join" }?.lastPathSegment?.let { app.onInviteLink(it) }
         intent.getStringExtra(EXTRA_ROUTE)?.let { route.value = it }
     }
 

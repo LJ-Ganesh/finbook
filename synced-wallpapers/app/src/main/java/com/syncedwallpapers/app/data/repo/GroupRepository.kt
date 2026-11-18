@@ -112,7 +112,7 @@ class GroupRepository @Inject constructor(private val api: Api, private val prof
             return tail.uppercase().filter { it.isLetterOrDigit() }
         }
 
-        fun inviteLink(code: String) = "syncedwallpapers://join/$code"
+        fun inviteLink(code: String) = "livrun://join/$code"
     }
 }
 

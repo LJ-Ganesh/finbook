@@ -1,6 +1,8 @@
-# Synced Wallpapers (Android prototype)
+# Livrun (Android prototype)
 
-Small trusted groups propose a photo and a time. If **every** member approves, the
+![Livrun](branding/livrun-logo-light-bg.png)
+
+Livrun (code name "Synced Wallpapers"; package `com.syncedwallpapers.app`): small trusted groups propose a photo and a time. If **every** member approves, the
 photo becomes the wallpaper on every member's phone for that window, then each
 person's own wallpaper comes back.
 

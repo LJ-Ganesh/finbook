@@ -47,12 +47,27 @@ class AppLaunchTest {
             error("stuck: auth=${vm.authState.value} settings=${vm.settings.value}")
         }
         compose.onNodeWithText("One photo, everyone's phone").assertExists()
+        compose.onNodeWithText("Livrun").assertExists()
         compose.onNodeWithText("Anyone can screenshot their own home screen.").assertExists()
         shot("1-concept")
         compose.onNodeWithText("Get started").performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Continue with Google").assertExists()
         shot("2-sign-in")
+    }
+
+    @Test fun `launcher and notification icons render`() {
+        val ctx = compose.activity
+        val dir = File("build/screenshots").apply { mkdirs() }
+        for ((name, res) in listOf("launcher" to com.syncedwallpapers.app.R.mipmap.ic_launcher, "notification" to com.syncedwallpapers.app.R.drawable.ic_notification)) {
+            val d = ctx.getDrawable(res)!!
+            val size = if (name == "launcher") 432 else 96
+            val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val c = android.graphics.Canvas(bmp)
+            if (name == "notification") c.drawColor(android.graphics.Color.DKGRAY)
+            d.setBounds(0, 0, size, size); d.draw(c)
+            File(dir, "icon-$name.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.onAllNodesWithTextCount(text: String) =

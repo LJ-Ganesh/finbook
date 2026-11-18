@@ -186,7 +186,7 @@ fun InviteScreen(groupId: String, onBack: () -> Unit, vm: InviteViewModel = hilt
                         OutlinedButton(onClick = { clipboard.setText(AnnotatedString(GroupRepository.inviteLink(inv.code))) }) { Text("Copy link") }
                         OutlinedButton(onClick = {
                             val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-                                .putExtra(android.content.Intent.EXTRA_TEXT, "Join my group on Synced Wallpapers: ${GroupRepository.inviteLink(inv.code)} (code ${inv.code})")
+                                .putExtra(android.content.Intent.EXTRA_TEXT, "Join my group on Livrun: ${GroupRepository.inviteLink(inv.code)} (code ${inv.code})")
                             context.startActivity(android.content.Intent.createChooser(send, "Share invite"))
                         }) { Text("Share") }
                     }

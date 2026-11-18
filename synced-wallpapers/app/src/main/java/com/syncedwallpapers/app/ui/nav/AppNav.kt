@@ -127,7 +127,7 @@ private fun MainTabs(
     onOpenHealth: () -> Unit,
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val titles = listOf("Synced Wallpapers", "Activity", "Settings")
+    val titles = listOf("Livrun", "Activity", "Settings")
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text(titles[tab]) }) },
         bottomBar = {

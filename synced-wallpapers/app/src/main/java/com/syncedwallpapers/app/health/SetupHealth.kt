@@ -96,31 +96,31 @@ object OemGuides {
 
     fun forManufacturer(manufacturer: String, packageName: String): OemGuide? = when (manufacturer.lowercase()) {
         "xiaomi", "redmi", "poco" -> OemGuide("Xiaomi / Redmi / POCO", listOf(
-            "Settings → Apps → Manage apps → Synced Wallpapers → Autostart: on",
+            "Settings → Apps → Manage apps → Livrun → Autostart: on",
             "Battery saver → No restrictions",
             "Recent apps: long-press the app and tap the lock icon"),
             listOf(c("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"),
                 c("com.miui.powerkeeper", "com.miui.powerkeeper.ui.HiddenAppsConfigActivity")
-                    .putExtra("package_name", packageName).putExtra("package_label", "Synced Wallpapers")))
+                    .putExtra("package_name", packageName).putExtra("package_label", "Livrun")))
         "samsung" -> OemGuide("Samsung", listOf(
-            "Settings → Apps → Synced Wallpapers → Battery → Unrestricted",
+            "Settings → Apps → Livrun → Battery → Unrestricted",
             "Settings → Battery → Background usage limits: make sure the app isn't in Sleeping or Deep sleeping apps"),
             listOf(c("com.samsung.android.lool", "com.samsung.android.sm.battery.ui.BatteryActivity"),
                 c("com.samsung.android.sm", "com.samsung.android.sm.ui.battery.BatteryActivity")))
         "oppo", "realme" -> OemGuide("Oppo / Realme", listOf(
-            "Settings → Apps → Auto launch (or Startup manager): allow Synced Wallpapers",
-            "Settings → Battery → App battery management → Synced Wallpapers → Allow background activity"),
+            "Settings → Apps → Auto launch (or Startup manager): allow Livrun",
+            "Settings → Battery → App battery management → Livrun → Allow background activity"),
             listOf(c("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"),
                 c("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"),
                 c("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity")))
         "vivo", "iqoo" -> OemGuide("Vivo", listOf(
-            "i Manager → App manager → Autostart manager: allow Synced Wallpapers",
+            "i Manager → App manager → Autostart manager: allow Livrun",
             "Settings → Battery → Background power consumption: allow high background usage"),
             listOf(c("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"),
                 c("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")))
         "oneplus" -> OemGuide("OnePlus", listOf(
-            "Settings → Battery → Battery optimisation → Synced Wallpapers → Don't optimise",
-            "Settings → Apps → Synced Wallpapers → Battery → Allow background activity"),
+            "Settings → Battery → Battery optimisation → Livrun → Don't optimise",
+            "Settings → Apps → Livrun → Battery → Allow background activity"),
             listOf(c("com.oneplus.security", "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity")))
         else -> null
     }

@@ -14,14 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// One accent (calm sage green) on neutral surfaces. No dynamic color: the app should
+// One accent (Livrun emerald, from the logo) on neutral surfaces. No dynamic color: the app should
 // look the same whatever wallpaper is live.
-private val Accent = Color(0xFF3F6B5C)
-private val AccentDark = Color(0xFF9CCFBA)
+private val Accent = Color(0xFF0B7F58) // 4.9:1 with white text
+private val AccentDark = Color(0xFF5EE0A6)
 
 private val Light = lightColorScheme(
     primary = Accent, onPrimary = Color.White,
-    primaryContainer = Color(0xFFD5E8DF), onPrimaryContainer = Color(0xFF0F2A21),
+    primaryContainer = Color(0xFFD3F4E4), onPrimaryContainer = Color(0xFF002114),
     secondary = Color(0xFF5B615E), onSecondary = Color.White,
     secondaryContainer = Color(0xFFE6E9E7), onSecondaryContainer = Color(0xFF1B1D1C),
     background = Color(0xFFFAFAF8), onBackground = Color(0xFF1B1C1B),
@@ -34,8 +34,8 @@ private val Light = lightColorScheme(
 )
 
 private val Dark = darkColorScheme(
-    primary = AccentDark, onPrimary = Color(0xFF00382A),
-    primaryContainer = Color(0xFF26503F), onPrimaryContainer = Color(0xFFD5E8DF),
+    primary = AccentDark, onPrimary = Color(0xFF00391F),
+    primaryContainer = Color(0xFF0B5A3F), onPrimaryContainer = Color(0xFFD3F4E4),
     secondary = Color(0xFFC2C7C4), onSecondary = Color(0xFF2C312F),
     secondaryContainer = Color(0xFF3A3F3D), onSecondaryContainer = Color(0xFFE0E3E1),
     background = Color(0xFF141615), onBackground = Color(0xFFE3E3E1),

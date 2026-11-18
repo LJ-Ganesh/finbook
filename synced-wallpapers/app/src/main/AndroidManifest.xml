@@ -45,11 +45,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Invite links: syncedwallpapers://join/ABCD2345 -->
+            <!-- Invite links: livrun://join/ABCD2345 (old syncedwallpapers:// links still work) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="livrun" android:host="join" />
                 <data android:scheme="syncedwallpapers" android:host="join" />
             </intent-filter>
         </activity>
