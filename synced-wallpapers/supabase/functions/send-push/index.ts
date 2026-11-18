@@ -9,6 +9,10 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   if (!hasCronSecret(req)) return json({ error: "forbidden" }, 403);
 
+  // Push is optional: without the FCM secret, leave the outbox alone (devices still
+  // sync by reconciliation and Realtime) instead of failing every minute.
+  if (!Deno.env.get("FCM_SERVICE_ACCOUNT")) return json({ skipped: "FCM_SERVICE_ACCOUNT not set" });
+
   const db = serviceClient();
   const sa = serviceAccount();
   const { data: rows, error } = await db.rpc("_claim_outbox", { p_limit: 200 });
