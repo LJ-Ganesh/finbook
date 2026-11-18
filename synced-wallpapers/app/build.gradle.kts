@@ -42,13 +42,28 @@ android {
         buildConfigField("String", "FIREBASE_SENDER_ID", "\"${prop("firebase.senderId")}\"")
     }
 
+    // One fixed key for every sideloaded build, so the SHA-1 registered in the Google
+    // Cloud Android OAuth client never changes. It is a throwaway prototype key, kept
+    // in the repo on purpose (like Android's own debug key, its password is public).
+    // Use a private key of your own before distributing beyond testers.
+    signingConfigs {
+        create("sideload") {
+            storeFile = file("sideload.keystore")
+            storePassword = "android"
+            keyAlias = "syncedwallpapers"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("sideload")
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Sideloaded prototype: sign release with the debug key unless you configure your own.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("sideload")
         }
     }
 

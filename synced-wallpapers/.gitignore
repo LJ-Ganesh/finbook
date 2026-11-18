@@ -3,6 +3,7 @@ build/
 /local.properties
 /app/google-services.json
 *.keystore
+!/app/sideload.keystore
 *.jks
 .idea/
 *.iml
