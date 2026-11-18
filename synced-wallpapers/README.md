@@ -207,3 +207,34 @@ runs in one transaction and raises a stable error code (for example `SLOT_TAKEN`
   several and falls back to the app's settings page.
 - Designed for one device per account. A second signed-in device also registers its
   push token and works, but delivery states are reported per account, not per device.
+
+## Web app (desktop)
+
+`web/` is a desktop web companion (Vite + React + TypeScript + supabase-js) using the
+same backend, rules and RPCs: sign in with Google, groups, invites and joining,
+propose (photo, focal point, phone-frame preview, time picker with taken slots),
+voting, suggestions and re-propose, admin requests, Activity, account settings.
+Browsers can't set the desktop wallpaper, so wallpapers still change on phones with the
+Android app. "Skip on my phone", delivery mode and Setup health live in the phone app.
+
+```bash
+cd web
+cp .env.example .env.local      # fill in the Supabase URL + publishable key
+npm install
+npm run dev                     # http://localhost:5173
+npm run build                   # static site in web/dist
+node scripts/ui-smoke.mjs out   # screenshots of every screen with fixture data
+```
+
+Web sign-in uses Supabase's Google OAuth redirect (the phone app uses an ID token), so:
+
+1. Google Cloud → your **Web** OAuth client → *Authorized redirect URIs* must include
+   `https://<project-ref>.supabase.co/auth/v1/callback`.
+2. Supabase → Authentication → URL Configuration: set *Site URL* to the web app's URL
+   and add `https://<your-domain>/**` (and `http://localhost:5173/**` for local
+   development) to *Redirect URLs*.
+
+Hosting: any static host works. On Vercel, import the repo with **Root Directory**
+`synced-wallpapers/web`, framework *Vite*, and set `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` as environment variables. `vercel.json` handles SPA routes and
+security headers (Netlify uses `public/_redirects`).
