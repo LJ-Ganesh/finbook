@@ -13,6 +13,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.SettingsCodeVerifierCache
+import io.github.jan.supabase.auth.SettingsSessionManager
+import com.russhwolf.settings.SharedPreferencesSettings
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
@@ -33,7 +36,7 @@ object AppModule {
     fun json(): Json = Json { ignoreUnknownKeys = true; explicitNulls = false; coerceInputValues = true }
 
     @Provides @Singleton
-    fun supabase(json: Json): SupabaseClient = createSupabaseClient(
+    fun supabase(@ApplicationContext context: Context, json: Json): SupabaseClient = createSupabaseClient(
         // A placeholder URL keeps an unconfigured build from crashing; every call then
         // fails and the UI says "not configured".
         supabaseUrl = AppConfig.supabaseUrl.ifBlank { "https://not-configured.invalid" },
@@ -44,6 +47,14 @@ object AppModule {
         install(Auth) {
             alwaysAutoRefresh = true
             autoLoadFromStorage = true
+            // Load the saved session immediately instead of waiting for a process-lifecycle
+            // callback (which depends on androidx.startup having run, e.g. not in tests).
+            enableLifecycleCallbacks = false
+            // Explicit storage for the session (app-private SharedPreferences, excluded from
+            // backups) instead of relying on an androidx.startup initializer having run.
+            val settings = SharedPreferencesSettings(context.getSharedPreferences("supabase_auth", Context.MODE_PRIVATE))
+            sessionManager = SettingsSessionManager(settings)
+            codeVerifierCache = SettingsCodeVerifierCache(settings)
         }
         install(Postgrest)
         install(Storage)
