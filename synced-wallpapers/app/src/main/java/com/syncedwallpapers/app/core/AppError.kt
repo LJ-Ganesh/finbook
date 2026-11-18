@@ -56,6 +56,8 @@ sealed class AppError(val userMessage: String, val retryable: Boolean = false) {
             "OWN_PROPOSAL" to "You can't suggest a time for your own proposal.",
         )
 
+        const val GENERIC = "Something went wrong. Please try again."
+
         fun messageFor(code: String): String = messages[code] ?: "Something went wrong ($code)."
 
         fun from(t: Throwable): AppError {
@@ -68,12 +70,13 @@ sealed class AppError(val userMessage: String, val retryable: Boolean = false) {
                         t.statusCode == 401 -> SessionExpired
                         t.statusCode in setOf(502, 503, 504, 520, 522, 540, 544) -> ServerWaking
                         messages.containsKey(code) -> Server(code, messageFor(code), t.description)
-                        else -> Unknown(t.message ?: "Something went wrong.")
+                        // Never show raw request details (URLs, headers) to the user.
+                        else -> { android.util.Log.w("AppError", "unmapped server error", t); Unknown(GENERIC) }
                     }
                 }
                 is HttpRequestTimeoutException -> ServerWaking
                 is HttpRequestException, is IOException -> Network
-                else -> Unknown(t.message ?: "Something went wrong.")
+                else -> { android.util.Log.w("AppError", "unexpected error", t); Unknown(GENERIC) }
             }
         }
     }

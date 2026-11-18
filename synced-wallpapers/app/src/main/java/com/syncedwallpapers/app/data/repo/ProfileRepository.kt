@@ -3,7 +3,6 @@ package com.syncedwallpapers.app.data.repo
 import com.syncedwallpapers.app.data.remote.Api
 import com.syncedwallpapers.app.data.remote.ProfileDto
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,7 +18,7 @@ class ProfileRepository @Inject constructor(private val api: Api) {
     suspend fun profiles(ids: Collection<String>): Map<String, ProfileDto> {
         if (ids.isEmpty()) return emptyMap()
         return api.client.from("profiles")
-            .select { filter { filter("id", FilterOperator.IN, "(${ids.joinToString(",")})") } }
+            .select { filter { isIn("id", ids.toList()) } }
             .decodeList<ProfileDto>().associateBy { it.id }
     }
 
