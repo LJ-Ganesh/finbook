@@ -234,6 +234,9 @@ Web sign-in uses Supabase's Google OAuth redirect (the phone app uses an ID toke
    and add `https://<your-domain>/**` (and `http://localhost:5173/**` for local
    development) to *Redirect URLs*.
 
+Live at **https://livrun.vercel.app** (Vercel project `livrun`). Redeploy with
+`VERCEL_TOKEN=... web/scripts/deploy-vercel.sh`.
+
 Hosting: any static host works. On Vercel, import the repo with **Root Directory**
 `synced-wallpapers/web`, framework *Vite*, and set `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY` as environment variables. `vercel.json` handles SPA routes and
